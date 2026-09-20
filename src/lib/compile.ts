@@ -155,23 +155,6 @@ export function renderAgentMarkdown(layer: Omit<CompiledLayer, "markdown">): str
   return lines.join("\n");
 }
 
-const PRODUCT_KEYWORDS = [
-  "CTGAN",
-  "synthetic data",
-  "RAG",
-  "Tricare Operator's Manual",
-  "swarm learning",
-  "transfer learning",
-  "Sublim COS",
-  "MCP",
-  "ontology",
-  "Intrep.io",
-  "Prodigy",
-  "CUBE",
-  "Department of War",
-  "CMS",
-];
-
 export function compileAgentLayer(text: string): CompiledLayer {
   const parsed = parseResume(text);
   parsed.roles.sort((a, b) => roleStart(b) - roleStart(a) || a.title.localeCompare(b.title));
@@ -180,11 +163,11 @@ export function compileAgentLayer(text: string): CompiledLayer {
   const known = new Set(
     SKILL_NODES.flatMap((n) => [n.id, n.label, ...n.aliases].map((s) => s.toLowerCase())),
   );
-  const products = PRODUCT_KEYWORDS.filter((term) => text.toLowerCase().includes(term.toLowerCase()));
+  const surface = tenures.flatMap((t) => t.node.aliases).filter((alias) => text.toLowerCase().includes(alias.toLowerCase()));
   const extras = extraKeywords(text, known).filter(
-    (k) => !products.some((p) => p.toLowerCase() === k.toLowerCase()),
+    (k) => !surface.some((p) => p.toLowerCase() === k.toLowerCase()),
   );
-  const keywords = [...products, ...extras];
+  const keywords = [...new Set([...surface, ...extras])];
   const calendarYears = calendarSpan(parsed.roles);
   const axes = scanAllAxes(text);
   const base = { parsed, tenures, axes, calendarYears, keywords };

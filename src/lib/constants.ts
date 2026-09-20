@@ -1,4 +1,4 @@
-export const SERVER_INSTRUCTIONS = `ResuMaxx compiles a machine-readable agent layer from resume text for any occupation.
+export const SERVER_INSTRUCTIONS = `ResuMaxx compiles a machine-readable agent layer from resume text.
 
 Host model duties:
 - Parse whatever the user uploaded (pdf, docx, image, LinkedIn export, raw text).
@@ -12,22 +12,22 @@ Output contract (deterministic):
 - Skill lines: family.id | years | aliases
 - Evidence line under each skill: evidence: role labels, A-Z
 - Axis lines: axis.id | aliases
-- Families emit in fixed order: ai, leadership, product, automation, engineering, trades, finance, sales, marketing, creative, operations, legal, clinical, data, delivery, people, domain
+- Families emit in fixed FAMILY_ORDER. Occupation does not change the schema.
 - Axes emit in fixed order: industry, culture, value, interest
 - Roles sort by start date descending, then title
 - Present = first day of current UTC month
 - Overlapping intervals merge. Concurrent board seats do not double-count
-- Lexical collapse is word-boundary only. Short tokens (ai, ml, rag, rpa, cpa, cfa, hvac) match as whole words
+- Lexical collapse is word-boundary only. Short tokens (ai, ml, rag, rpa) match as whole words
 - Related-skill carry: after the first direct hit, later roles that hit a node's related[] ids add years
 - Keywords: aliases that actually appear in the source text, then remaining frequent tokens
 - Ontology covers any occupation. Do not invent industry-specific years the text does not support
 - Same input text in the same UTC month produces the same markdown`;
 
 export const COMPILE_DESCRIPTION =
-  "Compile a machine-readable resume layer from plain text for any occupation. Output uses dotted family.id lines with merged years and alias collapse.";
+  "Compile a machine-readable resume layer from plain text. Output uses dotted family.id lines with merged years and alias collapse. Host extracts text first.";
 
 export const MATCH_DESCRIPTION =
   "Score a job description against resume text using the ResuMaxx ontology. Returns present/missing dotted ids, keyword gaps, and the compiled agent layer.";
 
 export const LIST_ONTOLOGY_DESCRIPTION =
-  "List canonical skill ids across all occupations, families, aliases, related-skill edges, and industry/culture/value/interest axes.";
+  "List canonical skill ids, families, aliases, related-skill edges, and industry/culture/value/interest axes.";

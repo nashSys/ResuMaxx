@@ -7,7 +7,7 @@ import {
   INTEREST_NODES,
   VALUE_NODES,
 } from "~/lib/axes";
-import { ONTOLOGY_VERSION, SKILL_NODES, families } from "~/lib/ontology";
+import { FAMILY_ORDER, ONTOLOGY_VERSION, SKILL_NODES, assertOntology, families } from "~/lib/ontology";
 
 const inputSchema = z.object({});
 
@@ -22,9 +22,18 @@ export const listOntologyTool = {
       `skill_families: ${families().join(", ")}`,
       "axes: industry, culture, value, interest",
       "",
+      `skill_count: ${SKILL_NODES.length}`,
+      `ontology_errors: ${assertOntology().join("; ") || "none"}`,
+      "",
       "## skills",
     ];
-    for (const node of SKILL_NODES) {
+    const skills = [...SKILL_NODES].sort((a, b) => {
+      const fa = FAMILY_ORDER.indexOf(a.family);
+      const fb = FAMILY_ORDER.indexOf(b.family);
+      if (fa !== fb) return fa - fb;
+      return a.id.localeCompare(b.id);
+    });
+    for (const node of skills) {
       lines.push(`- ${node.family}.${node.id}`);
       lines.push(`  label: ${node.label}`);
       lines.push(`  aliases: ${node.aliases.join(", ")}`);

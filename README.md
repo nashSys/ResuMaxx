@@ -6,6 +6,8 @@ The human page stays human. This server returns a second page: skill ontology, m
 
 Host model parses pdf, docx, image, or LinkedIn export. Host sends plain text. MCP returns markdown to paste.
 
+Works for any occupation. An HVAC resume, an acting resume, and a banking resume all compile through the same dotted ids.
+
 ## Tools
 
 - `compile_agent_layer` `{ text }`
@@ -14,11 +16,11 @@ Host model parses pdf, docx, image, or LinkedIn export. Host sends plain text. M
 
 Years on the same skill merge overlapping intervals. Two board seats in the same year count once.
 
-Output lines look like `ai.synthetic-data | 4.5 | ctgan, synthetic data`. Aliases collapse to that id. Related-skill edges carry years forward after the first direct hit.
+Output lines look like `trades.hvac | 6.0 | hvac, refrigeration, epa 608`. Aliases collapse to that id. Related-skill edges carry years forward after the first direct hit.
 
 Lexical match is word-boundary only. Present is pinned to the first day of the current UTC month so reruns in the same month match.
 
-Ontology v1.1 adds four axes: `industry`, `culture`, `value`, `interest`. `list_ontology` dumps all of them.
+Ontology v2 is occupation-agnostic. Finance, trades, performing arts, coaching, healthcare, software, and the rest collapse onto the same dotted ids. `list_ontology` dumps skills plus industry, culture, value, and interest axes.
 
 ## Run
 

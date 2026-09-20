@@ -1,4 +1,4 @@
-export const ONTOLOGY_VERSION = "resumaxx.ontology.v1";
+export const ONTOLOGY_VERSION = "resumaxx.ontology.v1.1";
 
 export type SkillNode = {
   id: string;

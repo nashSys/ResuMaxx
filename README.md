@@ -2,7 +2,7 @@
 
 MCP that compiles a machine-readable resume layer for hiring agents.
 
-The human page stays human. This server returns a second page: ontology ids, merged years, and keywords.
+The human page stays human. This server returns a second page: skill ontology, merged years, keywords, plus industry, culture, values, and interests.
 
 Host model parses pdf, docx, image, or LinkedIn export. Host sends plain text. MCP returns markdown to paste.
 
@@ -13,6 +13,8 @@ Host model parses pdf, docx, image, or LinkedIn export. Host sends plain text. M
 - `list_ontology`
 
 Years on the same skill merge overlapping intervals. Two board seats in the same year count once.
+
+Ontology v1.1 adds four axes: `industry`, `culture`, `value`, `interest`. `list_ontology` dumps all of them.
 
 ## Run
 

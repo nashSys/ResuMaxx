@@ -34,7 +34,7 @@ const handler = createMcpHandler(
   },
   {
     instructions: SERVER_INSTRUCTIONS,
-    serverInfo: { name: "resumaxx", version: "0.1.0" },
+    serverInfo: { name: "resumaxx", version: "0.2.0" },
   },
 );
 

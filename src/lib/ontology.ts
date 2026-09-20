@@ -1,10 +1,25 @@
+import { firstHit, norm as lexNorm, needleHits } from "~/lib/lexical";
+
 export const ONTOLOGY_VERSION = "resumaxx.ontology.v1.1";
+
+export const FAMILY_ORDER = [
+  "ai",
+  "leadership",
+  "product",
+  "automation",
+  "engineering",
+  "data",
+  "delivery",
+  "people",
+  "domain",
+] as const;
 
 export type SkillNode = {
   id: string;
   label: string;
   family: string;
   aliases: string[];
+  related?: string[];
 };
 
 export const SKILL_NODES: SkillNode[] = [
@@ -16,9 +31,9 @@ export const SKILL_NODES: SkillNode[] = [
   { id: "product-studio", label: "Product Studio Operations", family: "product", aliases: ["digital product studio", "innovation studio", "r&d studio"] },
   { id: "artificial-intelligence", label: "Artificial Intelligence", family: "ai", aliases: ["ai", "artificial intelligence", "intelligent systems"] },
   { id: "machine-learning", label: "Machine Learning", family: "ai", aliases: ["ml", "machine learning", "applied ml", "predictive models"] },
-  { id: "generative-ai", label: "Generative AI", family: "ai", aliases: ["generative ai", "genai", "gen ai", "llm", "large language model", "gpt", "foundation model"] },
-  { id: "retrieval-augmented-generation", label: "Retrieval Augmented Generation", family: "ai", aliases: ["rag", "retrieval-augmented", "retrieval augmented", "vector search", "document qa"] },
-  { id: "synthetic-data", label: "Synthetic Data", family: "ai", aliases: ["ctgan", "synthetic data", "synthetic records", "tabular gan"] },
+  { id: "generative-ai", label: "Generative AI", family: "ai", aliases: ["generative ai", "generative technology", "genai", "gen ai", "llm", "large language model", "gpt", "foundation model"], related: ["synthetic-data", "agentic-systems"] },
+  { id: "retrieval-augmented-generation", label: "Retrieval Augmented Generation", family: "ai", aliases: ["rag", "retrieval-augmented", "retrieval augmented", "vector search", "document qa"], related: ["knowledge-systems"] },
+  { id: "synthetic-data", label: "Synthetic Data", family: "ai", aliases: ["ctgan", "synthetic data", "synthetic records", "tabular gan"], related: ["generative-ai", "knowledge-systems", "agentic-systems"] },
   { id: "federated-learning", label: "Federated and Swarm Learning", family: "ai", aliases: ["swarm learning", "federated learning", "transfer learning", "decentralized learning"] },
   { id: "mlops", label: "MLOps", family: "ai", aliases: ["mlops", "model ops", "model deployment", "feature store"] },
   { id: "agentic-systems", label: "Agentic Systems", family: "ai", aliases: ["ai agent", "agentic", "multi-agent", "mcp", "tool use"] },
@@ -42,41 +57,44 @@ export const SKILL_NODES: SkillNode[] = [
   { id: "procure-to-pay", label: "Procure to Pay", family: "domain", aliases: ["procure to pay", "procure-to-pay", "p2p", "accounts payable"] },
 ];
 
-const ALIAS_INDEX = new Map<string, SkillNode>();
-for (const node of SKILL_NODES) {
-  ALIAS_INDEX.set(norm(node.id), node);
-  ALIAS_INDEX.set(norm(node.label), node);
-  for (const a of node.aliases) ALIAS_INDEX.set(norm(a), node);
+export function norm(value: string): string {
+  return lexNorm(value);
 }
 
-export function norm(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9+]+/g, " ").trim();
+export function dottedId(node: SkillNode): string {
+  return `${node.family}.${node.id}`;
 }
 
 export function resolveSkill(term: string): SkillNode | undefined {
-  const n = norm(term);
+  const n = lexNorm(term);
   if (!n) return undefined;
-  const exact = ALIAS_INDEX.get(n);
+  const exact = SKILL_NODES.find(
+    (node) => lexNorm(node.id) === n || lexNorm(node.label) === n || node.aliases.some((a) => lexNorm(a) === n),
+  );
   if (exact) return exact;
-  for (const [alias, node] of ALIAS_INDEX) {
-    if (alias.length < 3) continue;
-    if (n.includes(alias) || alias.includes(n)) return node;
-  }
-  return undefined;
+  return scanSkills(term)[0];
 }
 
 export function scanSkills(text: string): SkillNode[] {
-  const n = norm(text);
-  const found = new Map<string, SkillNode>();
-  for (const node of SKILL_NODES) {
-    const needles = [node.id, node.label, ...node.aliases].map(norm);
-    if (needles.some((needle) => needle.length >= 2 && n.includes(needle))) {
-      found.set(node.id, node);
-    }
-  }
-  return [...found.values()];
+  const hits = firstHit(text, SKILL_NODES, (node) => [node.id.replace(/-/g, " "), node.label, ...node.aliases]);
+  hits.sort((a, b) => {
+    const fa = FAMILY_ORDER.indexOf(a.family as (typeof FAMILY_ORDER)[number]);
+    const fb = FAMILY_ORDER.indexOf(b.family as (typeof FAMILY_ORDER)[number]);
+    if (fa !== fb) return fa - fb;
+    return a.id.localeCompare(b.id);
+  });
+  return hits;
+}
+
+export function nodeNeedles(node: SkillNode): string[] {
+  return [node.id.replace(/-/g, " "), node.label, ...node.aliases];
+}
+
+export function roleHitsNode(text: string, node: SkillNode): boolean {
+  return nodeNeedles(node).some((needle) => needleHits(text, needle));
 }
 
 export function families(): string[] {
-  return [...new Set(SKILL_NODES.map((n) => n.family))];
+  const have = new Set(SKILL_NODES.map((n) => n.family));
+  return FAMILY_ORDER.filter((f) => have.has(f));
 }

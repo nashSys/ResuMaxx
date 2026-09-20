@@ -1,8 +1,17 @@
 export type Interval = { start: Date; end: Date };
 
+export function presentDate(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+export function utcMonth(year: number, monthIndex: number): Date {
+  return new Date(Date.UTC(year, monthIndex, 1));
+}
+
 export function parseMonthYear(raw: string): Date | undefined {
   const t = raw.trim().toLowerCase();
-  if (/^(present|current|now|today)$/.test(t)) return new Date();
+  if (/^(present|current|now|today)$/.test(t)) return presentDate();
   const monthMap: Record<string, number> = {
     jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
     apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
@@ -13,10 +22,10 @@ export function parseMonthYear(raw: string): Date | undefined {
   if (m) {
     const month = m[1] ? monthMap[m[1]] : 0;
     if (month === undefined) return undefined;
-    return new Date(Number(m[2]), month, 1);
+    return utcMonth(Number(m[2]), month);
   }
   const iso = t.match(/^(\d{4})-(\d{2})(?:-\d{2})?$/);
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, 1);
+  if (iso) return utcMonth(Number(iso[1]), Number(iso[2]) - 1);
   return undefined;
 }
 

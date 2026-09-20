@@ -1,3 +1,4 @@
+import { scanAllAxes, type AxisId, type AxisNode } from "~/lib/axes";
 import { ONTOLOGY_VERSION, SKILL_NODES, scanSkills, type SkillNode } from "~/lib/ontology";
 import { extraKeywords, parseResume, type ParsedResume, type Role } from "~/lib/parse";
 import { coveredYears, mergeIntervals, roundYears, type Interval } from "~/lib/years";
@@ -11,6 +12,7 @@ export type SkillTenure = {
 export type CompiledLayer = {
   parsed: ParsedResume;
   tenures: SkillTenure[];
+  axes: Record<AxisId, AxisNode[]>;
   calendarYears: number;
   keywords: string[];
   markdown: string;
@@ -49,7 +51,7 @@ function calendarSpan(roles: Role[]): number {
 }
 
 export function renderAgentMarkdown(layer: Omit<CompiledLayer, "markdown">): string {
-  const { parsed, tenures, calendarYears, keywords } = layer;
+  const { parsed, tenures, axes, calendarYears, keywords } = layer;
   const lines: string[] = [];
   lines.push("<!-- resumaxx:agent-layer v1 -->");
   lines.push("# Agent layer");
@@ -100,6 +102,19 @@ export function renderAgentMarkdown(layer: Omit<CompiledLayer, "markdown">): str
     lines.push("No ontology hits. Add dated roles and common skill names.");
     lines.push("");
   }
+  const axisOrder: AxisId[] = ["industry", "culture", "value", "interest"];
+  for (const axis of axisOrder) {
+    lines.push(`## ${axis}`);
+    const rows = axes[axis] ?? [];
+    if (!rows.length) lines.push("- none detected");
+    for (const n of rows) {
+      lines.push(`- id: ${n.id}`);
+      lines.push(`  label: ${n.label}`);
+      lines.push(`  aliases: ${n.aliases.join(", ")}`);
+    }
+    lines.push("");
+  }
+
   lines.push("## keywords");
   lines.push("type: keyword");
   for (const k of keywords) lines.push(`- ${k}`);
@@ -122,6 +137,7 @@ export function compileAgentLayer(text: string): CompiledLayer {
   const known = new Set(SKILL_NODES.flatMap((n) => [n.id, n.label, ...n.aliases].map((s) => s.toLowerCase())));
   const keywords = extraKeywords(text, known);
   const calendarYears = calendarSpan(parsed.roles);
-  const base = { parsed, tenures, calendarYears, keywords };
+  const axes = scanAllAxes(text);
+  const base = { parsed, tenures, axes, calendarYears, keywords };
   return { ...base, markdown: renderAgentMarkdown(base) };
 }

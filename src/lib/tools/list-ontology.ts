@@ -25,16 +25,16 @@ export const listOntologyTool = {
       "## skills",
     ];
     for (const node of SKILL_NODES) {
-      lines.push(`- ${node.id}`);
+      lines.push(`- ${node.family}.${node.id}`);
       lines.push(`  label: ${node.label}`);
-      lines.push(`  family: ${node.family}`);
       lines.push(`  aliases: ${node.aliases.join(", ")}`);
+      if (node.related?.length) lines.push(`  related: ${node.related.join(", ")}`);
     }
     const dump = (title: string, nodes: { id: string; label: string; aliases: string[] }[]) => {
       lines.push("");
       lines.push(`## ${title}`);
       for (const node of nodes) {
-        lines.push(`- ${node.id}`);
+        lines.push(`- ${title}.${node.id}`);
         lines.push(`  label: ${node.label}`);
         lines.push(`  aliases: ${node.aliases.join(", ")}`);
       }

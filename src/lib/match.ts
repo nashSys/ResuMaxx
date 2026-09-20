@@ -5,8 +5,8 @@ export function matchJob(resumeText: string, jobText: string): string {
   const layer = compileAgentLayer(resumeText);
   const needed = scanSkills(jobText);
   const have = new Map(layer.tenures.map((t) => [t.node.id, t]));
-  const hits = needed.filter((n) => have.has(n.id));
-  const misses = needed.filter((n) => !have.has(n.id));
+  const hits = needed.filter((n) => have.has(n.id)).sort((a, b) => a.id.localeCompare(b.id));
+  const misses = needed.filter((n) => !have.has(n.id)).sort((a, b) => a.id.localeCompare(b.id));
   const score = needed.length ? Math.round((hits.length / needed.length) * 100) : 0;
 
   const lines = [
@@ -19,11 +19,11 @@ export function matchJob(resumeText: string, jobText: string): string {
     "## present",
     ...hits.map((n) => {
       const t = have.get(n.id);
-      return `- ${n.id} | years: ${t?.years ?? 0} | ${n.label}`;
+      return `- ${n.family}.${n.id} | ${t?.years ?? 0} | ${n.aliases.join(", ")}`;
     }),
     hits.length ? "" : "- none",
     "## missing",
-    ...misses.map((n) => `- ${n.id} | ${n.label}`),
+    ...misses.map((n) => `- ${n.family}.${n.id} | ${n.aliases.join(", ")}`),
     misses.length ? "" : "- none",
     "",
     "## keywords_in_job_not_in_layer",
@@ -45,6 +45,6 @@ function jobKeywordsMissing(jobText: string, layerMd: string): string[] {
     if (stop.has(w)) continue;
     if (!layer.includes(w)) missing.add(w);
   }
-  const out = [...missing].slice(0, 25).map((w) => `- ${w}`);
+  const out = [...missing].sort().slice(0, 25).map((w) => `- ${w}`);
   return out.length ? out : ["- none"];
 }

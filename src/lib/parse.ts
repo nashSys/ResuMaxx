@@ -20,12 +20,23 @@ export type ParsedResume = {
 };
 
 const RANGE =
-  /((?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}|\d{4})\s*[-\u2013\u2014to]+\s*((?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}|\d{4}|present|current|now)/i;
+  /((?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}|\d{4})\s*[-–—to]+\s*((?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}|\d{4}|present|current|now)/i;
 
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const URL = /https?:\/\/[^\s)]+/gi;
 const LINKEDIN = /linkedin\.com\/in\/[^\s)]+/gi;
-const SECTION = /^(experience|education|advisory|skills|summary|honors|languages|contact)$/i;
+const SECTION =
+  /^(experience|education|advisory|skills|summary|honors|languages|contact|certifications?|licenses?|credits?|volunteer|military|publications|affiliations|boards?|training)$/i;
+
+function looksLikeLocation(line: string): boolean {
+  if (!line || line.length > 90) return false;
+  if (RANGE.test(line) || SECTION.test(line)) return false;
+  return (
+    /\b[A-Z][a-zA-Z.]+,\s*[A-Z]{2}\b/.test(line) ||
+    /\bGreater\s+[A-Z][a-zA-Z\s]+Area\b/.test(line) ||
+    /\b(United States|Remote)\b/.test(line)
+  );
+}
 
 function firstLineLooksLikeName(line: string): boolean {
   const words = line.trim().split(/\s+/);
@@ -70,7 +81,7 @@ export function parseResume(text: string): ParsedResume {
       name = line.replace(/\s+/g, " ");
       continue;
     }
-    if (!location && /\b(WI|Wisconsin|United States|Madison)\b/i.test(line) && line.length < 80) {
+    if (!location && looksLikeLocation(line)) {
       location = line;
       continue;
     }
@@ -96,13 +107,13 @@ export function parseResume(text: string): ParsedResume {
         org = prev2;
         title = prev;
       } else {
-        const parts = prev.split(/\s+[\u00b7\u2022|]\s+|\s+at\s+|\s+,\s+/);
+        const parts = prev.split(/\s+[·•|]\s+|\s+at\s+|\s+,\s+/);
         title = parts[0] ?? prev;
         org = parts[1] ?? "";
       }
     } else {
       const withoutDates = line.replace(RANGE, " ").replace(/\s+/g, " ").trim();
-      const parts = withoutDates.split(/\s+[\u00b7\u2022|]\s+|\s+at\s+|\s+,\s+/);
+      const parts = withoutDates.split(/\s+[·•|]\s+|\s+at\s+|\s+,\s+/);
       title = parts[0] ?? withoutDates;
       org = parts[1] ?? "";
     }
@@ -126,7 +137,7 @@ export function parseResume(text: string): ParsedResume {
       if (!rangeMatch) continue;
       const rawDates = `${rangeMatch[1]} - ${rangeMatch[2]}`;
       const withoutDates = block.replace(RANGE, " ").replace(/\s+/g, " ").trim();
-      const parts = withoutDates.split(/\s+[\u00b7\u2022|]\s+|\s+at\s+|\s+,\s+/);
+      const parts = withoutDates.split(/\s+[·•|]\s+|\s+at\s+|\s+,\s+/);
       const role = buildRole(parts[0] ?? withoutDates, parts[1] ?? "", rawDates, block);
       const key = roleKey(role);
       if (seen.has(key)) continue;
